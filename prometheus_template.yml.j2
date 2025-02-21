@@ -1,0 +1,41 @@
+global:
+    scrape_timeout: 1m
+scrape_configs:
+  - job_name: "Confluent Cloud Kafka"
+    scrape_interval: 1m
+    static_configs:
+      - targets: ["api.telemetry.confluent.cloud"]
+    scheme: https
+    basic_auth:
+      username: "{{ cloud_api_key }}"
+      password: "{{ cloud_api_secret }}"
+    metrics_path: /v2/metrics/cloud/export
+    params:
+      resource.kafka.id:
+        {%- for env_name, clusters in cluster_groups.items() %}
+        {%- for cluster in clusters %}
+        - "{{ cluster.id }}"
+        {%- endfor %}
+        {%- endfor %}
+
+    metric_relabel_configs:
+      {%- for env_name, clusters in cluster_groups.items() %}
+      {%- for cluster in clusters %}
+      - source_labels: ["kafka_id"]
+        regex: "{{ cluster.id }}"
+        target_label: "cluster_name"
+        replacement: "{{ cluster.name }}"
+      - source_labels: ["kafka_id"]
+        regex: "{{ cluster.id }}"
+        target_label: "environment"
+        replacement: "{{ env_name }}"
+      - source_labels: ["kafka_id"]
+        regex: "{{ cluster.id }}"
+        target_label: "kind"
+        replacement: "{{ cluster.kind }}"
+      - source_labels: ["kafka_id"]
+        regex: "{{ cluster.id }}"
+        target_label: "region"
+        replacement: "{{ cluster.region }}" 
+      {%- endfor %}
+      {%- endfor %}
