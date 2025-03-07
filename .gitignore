@@ -1,3 +1,6 @@
+target_configs
+target_configs/*
+
 prometheus.yml
 # Python-generated files
 __pycache__/
